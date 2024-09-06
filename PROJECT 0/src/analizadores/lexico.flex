@@ -33,7 +33,6 @@ import java.util.ArrayList;
         return new Symbol(type, yyline + 1, yycolumn + 1, value);
     }
 
-
     private Symbol symbol(int type) {
         return symbol(type, yytext(), "DESCONOCIDO");
     }
@@ -52,7 +51,7 @@ import java.util.ArrayList;
 %eofval}
 
 /* Definición de caracteres ASCII imprimibles */
-ASCII = [\x20-\x7E]  // Esto ya debería incluir las comillas
+ASCII = [!-~]  // Esto ya debería incluir las comillas
 
 /* Palabras reservadas */
 CONJ = "CONJ"
@@ -67,6 +66,7 @@ DIFERENCIA = "-"
 RANGO = "~"
 
 /* Otros símbolos y estructuras */
+UNUSED = [ \r\t]+
 IDENT = [a-zA-Z_][a-zA-Z_0-9]*
 NUM = [0-9]+
 LLAVE_IZQ = "{"
@@ -109,19 +109,18 @@ PUNTO_COMA = ";"
 /* Caracteres ASCII */
 {ASCII} { return symbol(sym.ASCII, yytext(), "Carácter ASCII"); }
 
-/*manejo de comillas*/
-\" { return symbol(sym.ASCII, yytext(), "Carácter ASCII"); }
-
-
-/* Comentarios de una línea */
+/* Comentarios de una línea con # */
 "#"[^\n]* { /* Ignorar comentarios de una línea */ }
 
 /* Comentarios multilínea */
-"<!([^!]|[!]([^>]))*!>" { /* Ignorar comentarios multilínea */ }
+"/*"[^*]*[*]+([^/*][^*]*[*]+)*"/" { /* Ignorar comentarios multilínea */ }
 
-/*Ignorar espacios, tabulaciones y saltos de linea*/
-[ \t\r\n]+ { /* Ignorar espacios, tabulaciones y saltos de línea */ }
+/* Ignorar espacios, tabulaciones y saltos de línea */
+{UNUSED} { /* Ignorar espacios y tabulaciones */ }
 
-. { /* Cualquier carácter no reconocido */
-    throw new Error("Error: could not match input \"" + yytext() + "\" en la línea " + (yyline+1) + ", columna " + (yycolumn+1));
+\n { yychar = 1; /* Manejar salto de línea, resetear columna */ }
+
+/* Cualquier carácter no reconocido */
+. { 
+    reportErrorLexico(yytext()); 
 }

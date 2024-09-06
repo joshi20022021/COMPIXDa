@@ -3,7 +3,7 @@
     
     CONJ : conjunto1 -> " ~ /;
     CONJ : conjunto2 -> + ~ 9;
-    CONJ : conjunto3 -> %, *, +, 5, 7, =, ?, ;
+    CONJ : conjunto3 -> %, *, +, 5, 7, =, ?, _;
 
     OPERA : operacion1 -> U
                     ^ U U {conjunto1} {conjunto2} {conjunto3}

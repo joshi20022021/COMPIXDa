@@ -62,17 +62,23 @@ start with program;
 
 // Reglas de producción
 
+// Producción principal
 program ::= LLAVE_IZQ content LLAVE_DER;
 
+// Contenido general del archivo
 content ::= secuencia;
 
+
+// Secuencia de definiciones
 secuencia ::= secuencia definicion
             | definicion;
 
+// Definiciones de conjunto, operación, y evaluación
 definicion ::= conj_def
              | operacion_def
              | evaluar_def;
 
+// Definición de conjunto
 conj_def ::= CONJ DOS_PUNTOS IDENT ARROW conj_val PUNTO_COMA
            | CONJ DOS_PUNTOS IDENT ARROW error PUNTO_COMA {: 
                parser.report_error("Error en la definición del conjunto. Valor no válido.", null);
@@ -81,24 +87,35 @@ conj_def ::= CONJ DOS_PUNTOS IDENT ARROW conj_val PUNTO_COMA
                parser.report_error("Error general en la definición del conjunto.", null);
            :};
 
+conj_val ::= conj_elem RANGO conj_elem
+            | conj_elem_list;
+
+// Definición de operación
 operacion_def ::= OPERA DOS_PUNTOS IDENT ARROW expresion_lista PUNTO_COMA;
 
+// Lista de expresiones
 expresion_lista ::= expresion
                   | expresion expresion_lista;
 
+// Expresión de conjunto o elemento
 expresion ::= conj
             | operador expresion
             | conj_elem;
 
+// Definición de evaluación
 evaluar_def ::= EVALUAR PAREN_IZQ conj COMA IDENT PAREN_DER PUNTO_COMA;
 
+// Conjunto entre llaves
 conj ::= LLAVE_IZQ conj_elem_list LLAVE_DER;
 
+// Lista de elementos dentro del conjunto
 conj_elem_list ::= conj_elem
                  | conj_elem_list COMA conj_elem;
 
+// Elementos del conjunto
 conj_elem ::= ASCII | NUM | IDENT;
 
+// Operadores permitidos
 operador ::= UNION
              | INTERSECCION 
              | COMPLEMENTO
