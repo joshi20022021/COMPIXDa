@@ -1,0 +1,106 @@
+package src.analizadores;
+
+import java_cup.runtime.*;
+import java.util.LinkedList;
+import excepciones.Errores;
+import java.util.ArrayList;
+import java.util.List;
+
+parser code
+{:
+    public LexerScanner scanner;  
+    public LinkedList<Errores> listaErroresSintacticos = new LinkedList<>();
+
+    public parser(LexerScanner s) {  
+        super(s);
+        this.scanner = s;
+    }
+
+    public void syntax_error(Symbol s) {
+        String componente = (s.value != null) ? s.value.toString() : "Componente vacío";
+        String mensaje = "Error en la línea " + s.left + " columna " + s.right + 
+                        ". Componente inesperado: '" + componente + "'. " +
+                        "Se esperaba uno de los siguientes: [lista de tokens esperados]";
+        
+        listaErroresSintacticos.add(new Errores("Error Sintáctico",
+            mensaje,
+            s.left,
+            s.right,
+            componente));
+        
+        System.err.println("Error Sintáctico: " + mensaje);
+    }
+
+    public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception {
+        String componente = (s.value != null) ? s.value.toString() : "Componente vacío";
+        System.err.println("Error Sintáctico Irrecuperable en la línea " + s.left + ", columna " + s.right + ". Componente: '" + componente + "'");
+        listaErroresSintacticos.add(new Errores("Error Sintáctico Irrecuperable", "Error en la línea " + s.left + " columna " + s.right + ". Componente: '" + componente + "'", s.left, s.right, componente));
+    }
+
+    public LinkedList<Errores> getErroresSintacticos() {
+        return listaErroresSintacticos;
+    }
+:}
+// Terminales
+terminal String CONJ, OPERA, EVALUAR;
+terminal String UNION, INTERSECCION, COMPLEMENTO, DIFERENCIA, RANGO;
+terminal String IDENT, ASCII, NUM, LLAVE_IZQ, LLAVE_DER, ARROW, COMA, PAREN_IZQ, PAREN_DER, DOS_PUNTOS, PUNTO_COMA;
+
+// No terminales
+non terminal Object program, content, secuencia, definicion;
+non terminal Object conj_def, operacion_def, evaluar_def;
+non terminal Object conj_val, conj_elem_list, conj_elem;
+non terminal Object expresion, expresion_lista, operador;
+non terminal Object conj, elemento, elemento_lista;
+
+// Precedencias y asociatividades
+precedence left UNION, INTERSECCION;
+precedence left COMPLEMENTO, DIFERENCIA;
+
+// Símbolo inicial
+start with program;
+
+// Reglas de producción
+
+program ::= LLAVE_IZQ content LLAVE_DER;
+
+content ::= secuencia;
+
+secuencia ::= secuencia definicion
+            | definicion;
+
+definicion ::= conj_def
+             | operacion_def
+             | evaluar_def;
+
+conj_def ::= CONJ DOS_PUNTOS IDENT ARROW conj_val PUNTO_COMA
+           | CONJ DOS_PUNTOS IDENT ARROW error PUNTO_COMA {: 
+               parser.report_error("Error en la definición del conjunto. Valor no válido.", null);
+           :}
+           | error PUNTO_COMA {: 
+               parser.report_error("Error general en la definición del conjunto.", null);
+           :};
+
+operacion_def ::= OPERA DOS_PUNTOS IDENT ARROW expresion_lista PUNTO_COMA;
+
+expresion_lista ::= expresion
+                  | expresion expresion_lista;
+
+expresion ::= conj
+            | operador expresion
+            | conj_elem;
+
+evaluar_def ::= EVALUAR PAREN_IZQ conj COMA IDENT PAREN_DER PUNTO_COMA;
+
+conj ::= LLAVE_IZQ conj_elem_list LLAVE_DER;
+
+conj_elem_list ::= conj_elem
+                 | conj_elem_list COMA conj_elem;
+
+conj_elem ::= ASCII | NUM | IDENT;
+
+operador ::= UNION
+             | INTERSECCION 
+             | COMPLEMENTO
+             | DIFERENCIA;
+
